@@ -1,23 +1,13 @@
-FROM hapiproject/hapi:base as build-hapi
+FROM tomcat:9.0-jdk11
 
-ARG HAPI_FHIR_URL=https://github.com/jamesagnew/hapi-fhir/
-ARG HAPI_FHIR_BRANCH=master
+COPY target/hapi.war /usr/local/tomcat/webapps/
+#COPY target/hapi.war /usr/local/Cellar/tomcat/9.0.37/libexec/webapps/
 
-RUN git clone --branch ${HAPI_FHIR_BRANCH} ${HAPI_FHIR_URL}
-WORKDIR /tmp/hapi-fhir/
-RUN /tmp/apache-maven-3.6.2/bin/mvn dependency:resolve
-RUN /tmp/apache-maven-3.6.2/bin/mvn install -DskipTests
-
-WORKDIR /tmp/hapi-fhir-jpaserver-starter
-
-COPY . .
-
-RUN /tmp/apache-maven-3.6.2/bin/mvn clean install -DskipTests
-
-FROM tomcat:9-jre11
-
-RUN mkdir -p /data/hapi/lucenefiles && chmod 775 /data/hapi/lucenefiles
-COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/tomcat/webapps/
+ENV HAPI_DATASOURCE_URL jdbc:mysql://host.docker.internal:3306/hapi_test_data
+ENV HAPI_DATASOURCE_DRIVER com.mysql.jdbc.Driver
+ENV HAPI_DATASOURCE_USERNAME dbAdmin
+ENV HAPI_DATASOURCE_PASSWORD j5Ke?oP!vd31
+ENV HAPI_HIBERNATE_DIALECT org.hibernate.dialect.MySQL5InnoDBDialect
 
 EXPOSE 8080
 
